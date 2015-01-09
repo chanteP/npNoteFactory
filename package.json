@@ -1,0 +1,25 @@
+{
+  "name": "npNoteFactory",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "browserify": "^8.1.0",
+    "uglify-js": "^2.4.16",
+    "watchify": "^2.2.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chanteP/npNoteFactory.git"
+  },
+  "author": "chante",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/chanteP/npNoteFactory/issues"
+  },
+  "homepage": "https://github.com/chanteP/npNoteFactory"
+}
