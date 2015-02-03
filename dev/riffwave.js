@@ -67,11 +67,11 @@ function RIFFWAVE(base64){
         else{
 	        var fr = new FileReader();
 	        fr.onload = function(){
-	        callback && callback(this.result)
-
+	           callback && callback(this.result)
 	        }
 	        fr.readAsDataURL(blob)
         }
 	}
 }
+module.exports = RIFFWAVE;
 //http://baike.baidu.com/link?url=ZDGhS9R8eBYqAY7p3N1oFJrqjBvB8Rqt9SNGaKbW54Z8WozKwV8KYdPwJ4YQky6L

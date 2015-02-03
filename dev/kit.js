@@ -1,4 +1,32 @@
-module.exports = {
+var list = ["C","#C","D","#D","E","F","#F","G","#G","A","#A","B"];
+var relCache = {};
+var objMerger = function(type, args){
+    var hold = false, rsObj, curObj;
+    if(args[args.length-1] === true){
+        hold = true;
+    }
+    rsObj = hold ? args[0] : {};
+    for(var i = +hold, j = args.length - hold; i<j; i++) {
+        curObj = args[i];
+        if(typeof curObj !== 'object'){continue;}
+        for(var key in (type ? curObj : args[0])){
+            if(!args[i].hasOwnProperty(key)){continue;}
+            rsObj[key] = curObj[key];
+        }
+    };
+    return rsObj;
+};
+var getIndex = function(noteName, level){
+    var index = list.indexOf(noteName);
+    if(index <= 0){
+        throw 'note ' + noteName + 'error';
+    }
+    return level * 12 + index;
+};
+//A4 = 440hz
+var q = Math.pow(2, 1 / 12), baseAHz = 440, baseAIndex = getIndex('A', 4);
+
+var api = {
     Worker : function(){
         var functionBodyRegx, URL, contentType, code, url;
         functionBodyRegx = /function[^(]*\([^)]*\)\s*\{([\s\S]*)\}/;
@@ -16,25 +44,15 @@ module.exports = {
             return new Worker( url );
         }
     }(),
-    parseParam : function parseParam(obj1, obj2){
-        if(typeof obj2 ===  'undefined'){return obj1;}
-        var json = {};
-        for(var key in obj1){
-            if(obj1.hasOwnProperty(key) && key != '__proto__' && key !== 'prototype'){
-                json[key] = obj2[key] !== undefined ? obj2[key] : obj1[key];
-            }
-        }
-        json.__proto__ = obj1.__proto__;
-        return json;
+    parse : function(){
+        return objMerger(0, arguments);
     },
-    list : ["C","#C","D","#D","E","F","#F","G","#G","A","#A","B"],
-    getFrequency = function(note, level){
-        // var p = Math.pow(2, 1/12);
-        var a = 220;
-        var index = level >= 1 ? 
-            list.indexOf(note) + 12 * level : 
-            list.indexOf(note) - 12 + 12 * (level + 1);
-        var dis = list.indexOf('A') - index;
-        return a * Math.pow(2, -dis/12);
+    merge : function(){
+        return objMerger(1, arguments);
+    },
+    list : list,
+    getFrequency : function(noteName, level){
+        return baseAHz * Math.pow(q, getIndex(noteName, level) - baseAIndex);
     }
 };
+module.exports = api;

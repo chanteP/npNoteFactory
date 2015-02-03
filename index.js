@@ -1,1 +1,1 @@
-require('./dev/noteFactory');
+window.noteFactory = require('./dev/noteFactory');
