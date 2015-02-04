@@ -1,1 +1,1 @@
-window.noteFactory = require('./dev/noteFactory');
+module.exports = window.Note = require('./dev/noteFactory');

@@ -3,7 +3,7 @@ var browserify = require('browserify');
 var watchify = require('watchify');
 var fs = require('fs');
 
-var filename = 'noteFactory';
+var filename = 'note';
 
 var dest = './dist/'+filename+'.js';
 var destmin = './dist/'+filename+'.min.js';

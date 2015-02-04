@@ -16,16 +16,7 @@ var objMerger = function(type, args){
     };
     return rsObj;
 };
-var getIndex = function(noteName, level){
-    var index = list.indexOf(noteName);
-    if(index <= 0){
-        throw 'note ' + noteName + 'error';
-    }
-    return level * 12 + index;
-};
 //A4 = 440hz
-var q = Math.pow(2, 1 / 12), baseAHz = 440, baseAIndex = getIndex('A', 4);
-
 var api = {
     Worker : function(){
         var functionBodyRegx, URL, contentType, code, url;
@@ -38,9 +29,7 @@ var api = {
                 fnStr = fnStr.replace('"{{'+param+'}}"', spec[param]);
             }
             code = fnStr.match( functionBodyRegx )[1];
-            url = window.opera ? 
-                "data:application/javascript," + encodeURIComponent( code ) :
-                URL.createObjectURL( new Blob( [ code ], contentType ) );
+            url = URL.createObjectURL( new Blob( [ code ], contentType ) );
             return new Worker( url );
         }
     }(),
@@ -52,7 +41,37 @@ var api = {
     },
     list : list,
     getFrequency : function(noteName, level){
-        return baseAHz * Math.pow(q, getIndex(noteName, level) - baseAIndex);
+        return baseAHz * Math.pow(q, api.translate(noteName, level) - baseAIndex);
+    },
+    translate : function(input){
+        var note, level;
+        if(typeof input === 'string'){
+            var match = api.parseNote(input);
+            note = match[0];
+            level = match[1];
+            var index = list.indexOf(note);
+            if(index <= 0){
+                throw 'translate note: ' + note + ' error';
+            }
+            return level * 12 + index;
+        }
+        else if(typeof input === 'number'){
+            note = input % 12;
+            level = (input / 12) | 0;
+            return list[note] + level;
+        }
+        else{
+            throw 'translate note: ' + input + ' error';
+        }
+    },
+    parseNote : function(input){
+        var noteExp = /(#?[A-Z])([\d])/, match;
+        match = noteExp.exec(input);
+        if(!match){
+            throw 'input error : ' + $.list;
+        }
+        return [match[1], match[2]];
     }
 };
+var q = Math.pow(2, 1 / 12) || 1.06, baseAHz = 440, baseAIndex = api.translate('A', 4);
 module.exports = api;

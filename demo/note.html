@@ -2,10 +2,18 @@
 <html>
 <head>
     <title></title>
-    <script src="../dist/noteFactory.js"></script>
+    <script src="../dist/note.js"></script>
 </head>
 <body>
+<audio id="au"></audio>
 <script>
+    var f = new Note({
+        soundEffect : Note.effect.piano
+    });
+    f.get('A4', function(b){
+        au.src = b;
+        au.play();
+    });
 </script>
 </body>
 </html>

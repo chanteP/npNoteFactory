@@ -1,7 +1,23 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-window.noteFactory = require('./dev/noteFactory');
-},{"./dev/noteFactory":4}],2:[function(require,module,exports){
+module.exports = window.Note = require('./dev/noteFactory');
+},{"./dev/noteFactory":5}],2:[function(require,module,exports){
+module.exports = {
+    '8bit' : function(w, t, spec){
+        spec.vol = 100;
+        return Math.sin(w * t);
+    },
+    'piano' : function(w, t, spec){
+        return spec.vol / 1.5 * (
+                sin(w * t)
+                + .3 * sin(2 * w * t)
+                + .2 * sin(3 * w * t)
+            );
+    }
+}
+},{}],3:[function(require,module,exports){
 module.exports = function(){
+    var PI = Math.PI, sin = Math.sin, cos = Math.cos, tan = Math.tan, cot = Math.cot, pow = Math.pow, sqrt = Math.sqrt, abs = Math.abs;
+
     var RIFFWAVE = "{{riffwave}}";
 
     var soundEff = "{{soundEffect}}",
@@ -13,17 +29,15 @@ module.exports = function(){
         numChannels = "{{numChannels}}",
         filterByte = "{{filterByte}}";
 
-    var PI = Math.PI, sin = Math.sin, cos = Math.cos, tan = Math.tan, cot = Math.cot, pow = Math.pow, sqrt = Math.sqrt, abs = Math.abs;
-
     var calc = function(f, size){
-        var vol = 1,
+        var vol = 100,
             w = f * 2 * PI / sampleRate,
             t = 0;
         var spec = {
             vol : vol,
-            f : f
+            f : f,
+            T : f * sampleRate
         };
-        
         var data = new Uint8Array(size);
         var singleSampL, singleSampR;
         while (t++ <= size) {
@@ -32,7 +46,7 @@ module.exports = function(){
             singleSampR = singleSampL;
             data[t*2] = singleSampL
             data[t*2+1] = singleSampR;
-            spec.vol *= spec.weak;
+            spec.vol *= weak;
         }
         return data;
     }
@@ -54,39 +68,17 @@ module.exports = function(){
         wave.header.filterByte = filterByte;
         wave.header.size = size;
 
-        wave.Make(data, function(base64){
+        wave.Make(data, function(blob, url){
             postMessage({
-                base64  : base64,
+                blob    : blob,
+                url     : url,
                 len     : len, 
                 note    : note
             });
         });
-
-        // var time = e.data.time;
-        // var len = e.data.len;
-        // var w = e.data.w;
-        // var soundEff = "{{soundEffect}}";
-        // var data = new Uint8Array(len);
-        // var t = 0;
-        // var niu = 30 / (2 * Math.PI);
-        // var em = {
-        //     'v' : 70,
-        //     'alpha' : 1,
-        //     'weak' : "{{weak}}"
-        // }
-        // var singleSampL, singleSampR;
-        // while (t++ <= len) {
-        //     singleSampL = Math.round(soundEff(w,t,em));
-        //     // singleSampL = Math.max(0, singleSampL);
-        //     singleSampR = singleSampL;
-        //     data[t*2] = singleSampL
-        //     data[t*2+1] = singleSampR;
-        //     em.v *= em.weak;
-        // }
-        // postMessage({'data':data, 'len':len, 'note':e.data.note, 'key':e.data.key, 'time': time});
     }
 }
-},{}],3:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 var list = ["C","#C","D","#D","E","F","#F","G","#G","A","#A","B"];
 var relCache = {};
 var objMerger = function(type, args){
@@ -105,16 +97,7 @@ var objMerger = function(type, args){
     };
     return rsObj;
 };
-var getIndex = function(noteName, level){
-    var index = list.indexOf(noteName);
-    if(index <= 0){
-        throw 'note ' + noteName + 'error';
-    }
-    return level * 12 + index;
-};
 //A4 = 440hz
-var q = Math.pow(2, 1 / 12), baseAHz = 440, baseAIndex = getIndex('A', 4);
-
 var api = {
     Worker : function(){
         var functionBodyRegx, URL, contentType, code, url;
@@ -127,9 +110,7 @@ var api = {
                 fnStr = fnStr.replace('"{{'+param+'}}"', spec[param]);
             }
             code = fnStr.match( functionBodyRegx )[1];
-            url = window.opera ? 
-                "data:application/javascript," + encodeURIComponent( code ) :
-                URL.createObjectURL( new Blob( [ code ], contentType ) );
+            url = URL.createObjectURL( new Blob( [ code ], contentType ) );
             return new Worker( url );
         }
     }(),
@@ -141,11 +122,41 @@ var api = {
     },
     list : list,
     getFrequency : function(noteName, level){
-        return baseAHz * Math.pow(q, getIndex(noteName, level) - baseAIndex);
+        return baseAHz * Math.pow(q, api.translate(noteName, level) - baseAIndex);
+    },
+    translate : function(input){
+        var note, level;
+        if(typeof input === 'string'){
+            var match = api.parseNote(input);
+            note = match[0];
+            level = match[1];
+            var index = list.indexOf(note);
+            if(index <= 0){
+                throw 'translate note: ' + note + ' error';
+            }
+            return level * 12 + index;
+        }
+        else if(typeof input === 'number'){
+            note = input % 12;
+            level = (input / 12) | 0;
+            return list[note] + level;
+        }
+        else{
+            throw 'translate note: ' + input + ' error';
+        }
+    },
+    parseNote : function(input){
+        var noteExp = /(#?[A-Z])([\d])/, match;
+        match = noteExp.exec(input);
+        if(!match){
+            throw 'input error : ' + $.list;
+        }
+        return [match[1], match[2]];
     }
 };
+var q = Math.pow(2, 1 / 12) || 1.06, baseAHz = 440, baseAIndex = api.translate('A', 4);
 module.exports = api;
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 var $ = require('./kit');
 var factoryContent = require('./factoryContent');
 var riffwave = require('./riffwave');
@@ -158,10 +169,7 @@ var nodeFactory = function(cfg){
     var self = this;
     this.config = $.parse({
         soundEffect : function(w, t, spec){
-            var niu = 30 / (2 * PI);
-            return spec.vol * sin(w*t + niu) +
-            spec.vol * .2 * (sin(w*2*t + niu) + sin(w/2*t + niu)) +
-            spec.vol * .1 * (sin(w*4*t + niu) + sin(w/4*t + niu));
+            return spec.vol * Math.sin(w * t);
         },
         duration : 3,
         weak : .99985,
@@ -191,12 +199,12 @@ var nodeFactory = function(cfg){
     this.worker.onmessage = function(e){
         var noteFullName = e.data.note,
             duration = e.data.len,
-            base64 = e.data.base64;
-        self.cache(noteFullName, duration, base64);
-        self._pub(noteFullName, duration, base64);
+            url = e.data.url;
+        self.cache(noteFullName, duration, url);
+        self._pub(noteFullName, duration, url);
     }
 }
-//A4, callback(base64), [duration]
+//A4, callback(url), [duration]
 nodeFactory.prototype.get = function(noteFullName, callback, duration){
     duration = duration || this.config.duration;
     var data = this.cache[noteFullName], 
@@ -224,12 +232,8 @@ nodeFactory.prototype.cache = function(noteFullName, duration, data){
     }
 }
 nodeFactory.prototype.build = function(noteFullName, duration){
-    var noteExp = /([A-Z|#]{1, 2})([\d])/, match;
-    match = noteExp.exec(noteFullName);
-    if(!match){
-        return;
-    }
-    var f = $.getFrequency(match[1], match[2]);
+    var match = $.parseNote(noteFullName);
+    var f = $.getFrequency(match[0], match[1]);
     this.worker.postMessage({
         f : f,
         note : noteFullName,
@@ -243,7 +247,7 @@ nodeFactory.prototype._sub = function(noteFullName, duration, callback){
     }
     this._listener[id].push(callback);
 }
-nodeFactory.prototype._pub = function(noteFullName, duration, base64){
+nodeFactory.prototype._pub = function(noteFullName, duration, url){
     var id = getID(noteFullName, duration);
     var list = this._listener[id] || [];
     this._listener[id] = [];
@@ -252,86 +256,82 @@ nodeFactory.prototype._pub = function(noteFullName, duration, base64){
         duration : duration
     };
     list.forEach(function(func){
-        func(base64, arg);
+        func(url, arg);
     });
 }
+nodeFactory.translate = $.translate;
+nodeFactory.effect = require('./effect');
+nodeFactory.noteList = $.list;
 module.exports = nodeFactory;
-},{"./factoryContent":2,"./kit":3,"./riffwave":5}],5:[function(require,module,exports){
+
+},{"./effect":2,"./factoryContent":3,"./kit":4,"./riffwave":6}],6:[function(require,module,exports){
 /*
-	制作音频
-	改良版@131231 by chante
+    制作音频
+    改良版@131231 by chante
 */
 function RIFFWAVE(base64){
-	this.mode = !!base64;
-	function to8Array(b, i){
-		var offset = 0, rs = [];
-		while(b--){
-			rs.push((i>>offset++*8)&0xFF);
-		}
-		return rs;
-	}
-	this.bitAdd = function(num){
-		this.dataBit += num;
-		return num;
-	}
-	this.header = {
-		'RIFF_ID' 		: [0x52,0x49,0x46,0x46],
-		'chunkSize' 	: 0,
-		'WAVE_ID' 		: [0x57,0x41,0x56,0x45],
-		'FMT_ID' 		: [0x66,0x6d,0x74,0x20],
-		'filterByte'	: 0x10,
-		'formatType'	: 1,
-		'numChannels'	: 2,
-		'sampleRate'	: 44100,
-		'byteRate'		: 0,
-		'blockAlign'	: 0,
-		'bitsPerSample'	: 8,
-		'fact_ID'		: [0x64,0x61,0x74,0x61],
-		'size'			: 4
-	};
-	this.Make = function(data, callback){
-		var bitType = this.header.bitsPerSample == 16 ? 4 : 3;
+    this.mode = !!base64;
+    function to8Array(b, i){
+        var offset = 0, rs = [];
+        while(b--){
+            rs.push((i>>offset++*8)&0xFF);
+        }
+        return rs;
+    }
+    this.bitAdd = function(num){
+        this.dataBit += num;
+        return num;
+    }
+    this.header = {
+        'RIFF_ID'       : [0x52,0x49,0x46,0x46],
+        'chunkSize'     : 0,
+        'WAVE_ID'       : [0x57,0x41,0x56,0x45],
+        'FMT_ID'        : [0x66,0x6d,0x74,0x20],
+        'filterByte'    : 0x10,
+        'formatType'    : 1,
+        'numChannels'   : 2,
+        'sampleRate'    : 44100,
+        'byteRate'      : 0,
+        'blockAlign'    : 0,
+        'bitsPerSample' : 8,
+        'fact_ID'       : [0x64,0x61,0x74,0x61],
+        'size'          : 4
+    };
+    this.Make = function(data, callback){
+        var bitType = this.header.bitsPerSample == 16 ? 4 : 3;
         this.header.blockAlign = (this.header.numChannels * this.header.bitsPerSample) >> bitType;
         this.header.byteRate = this.header.blockAlign * this.header.sampleRate;
         this.header.size = data.length * (this.header.bitsPerSample >> bitType);
         this.header.chunkSize = 36 + this.header.size;
         this.dataBit = 0;
         this.data = new Uint8Array(this.header.size * (bitType - 2) + 44);
-        this.data.set(this.header.RIFF_ID, this.dataBit);					this.bitAdd(4);
-        this.data.set(to8Array(4, this.header.chunkSize), this.dataBit);	this.bitAdd(4);
-        this.data.set(this.header.WAVE_ID, this.dataBit);					this.bitAdd(4);
-        this.data.set(this.header.FMT_ID, this.dataBit);					this.bitAdd(4);
-        this.data.set(to8Array(4, this.header.filterByte), this.dataBit);	this.bitAdd(4);
-        this.data.set(to8Array(2, this.header.formatType), this.dataBit);	this.bitAdd(2);
-        this.data.set(to8Array(2, this.header.numChannels), this.dataBit);	this.bitAdd(2);
-        this.data.set(to8Array(4, this.header.sampleRate), this.dataBit);	this.bitAdd(4);
-        this.data.set(to8Array(4, this.header.byteRate), this.dataBit);		this.bitAdd(4);
-        this.data.set(to8Array(2, this.header.blockAlign), this.dataBit);	this.bitAdd(2);
+        this.data.set(this.header.RIFF_ID, this.dataBit);                   this.bitAdd(4);
+        this.data.set(to8Array(4, this.header.chunkSize), this.dataBit);    this.bitAdd(4);
+        this.data.set(this.header.WAVE_ID, this.dataBit);                   this.bitAdd(4);
+        this.data.set(this.header.FMT_ID, this.dataBit);                    this.bitAdd(4);
+        this.data.set(to8Array(4, this.header.filterByte), this.dataBit);   this.bitAdd(4);
+        this.data.set(to8Array(2, this.header.formatType), this.dataBit);   this.bitAdd(2);
+        this.data.set(to8Array(2, this.header.numChannels), this.dataBit);  this.bitAdd(2);
+        this.data.set(to8Array(4, this.header.sampleRate), this.dataBit);   this.bitAdd(4);
+        this.data.set(to8Array(4, this.header.byteRate), this.dataBit);     this.bitAdd(4);
+        this.data.set(to8Array(2, this.header.blockAlign), this.dataBit);   this.bitAdd(2);
         this.data.set(to8Array(2, this.header.bitsPerSample), this.dataBit);this.bitAdd(2);
-        this.data.set(this.header.fact_ID, this.dataBit);					this.bitAdd(4);
-        this.data.set(to8Array(4, this.header.size), this.dataBit);			this.bitAdd(4);
+        this.data.set(this.header.fact_ID, this.dataBit);                   this.bitAdd(4);
+        this.data.set(to8Array(4, this.header.size), this.dataBit);         this.bitAdd(4);
         if(bitType == 4){
-	        for(var i = 0, j = data.length; i<j; i++){
-	        	this.data.set(to8Array(2, data[i]).reverse(), this.dataBit);this.bitAdd(2);
-	        }
+            for(var i = 0, j = data.length; i<j; i++){
+                this.data.set(to8Array(2, data[i]).reverse(), this.dataBit);this.bitAdd(2);
+            }
         }
         else{
-	        this.data.set(data, this.dataBit);
+            this.data.set(data, this.dataBit);
         }
         var blob = new Blob([].concat(this.data), {'type': 'audio/wav'});
-        if(this.mode){
-	        var url = URL.createObjectURL(blob);
-	        callback && callback(url);
-        }
-        else{
-	        var fr = new FileReader();
-	        fr.onload = function(){
-	           callback && callback(this.result)
-	        }
-	        fr.readAsDataURL(blob)
-        }
-	}
+        var url = URL.createObjectURL(blob);
+        callback && callback(blob, url);
+    }
 }
+window && (window.RIFFWAVE = RIFFWAVE);
 module.exports = RIFFWAVE;
 //http://baike.baidu.com/link?url=ZDGhS9R8eBYqAY7p3N1oFJrqjBvB8Rqt9SNGaKbW54Z8WozKwV8KYdPwJ4YQky6L
 },{}]},{},[1]);

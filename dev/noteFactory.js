@@ -10,10 +10,7 @@ var nodeFactory = function(cfg){
     var self = this;
     this.config = $.parse({
         soundEffect : function(w, t, spec){
-            var niu = 30 / (2 * PI);
-            return spec.vol * sin(w*t + niu) +
-            spec.vol * .2 * (sin(w*2*t + niu) + sin(w/2*t + niu)) +
-            spec.vol * .1 * (sin(w*4*t + niu) + sin(w/4*t + niu));
+            return spec.vol * Math.sin(w * t);
         },
         duration : 3,
         weak : .99985,
@@ -43,12 +40,12 @@ var nodeFactory = function(cfg){
     this.worker.onmessage = function(e){
         var noteFullName = e.data.note,
             duration = e.data.len,
-            base64 = e.data.base64;
-        self.cache(noteFullName, duration, base64);
-        self._pub(noteFullName, duration, base64);
+            url = e.data.url;
+        self.cache(noteFullName, duration, url);
+        self._pub(noteFullName, duration, url);
     }
 }
-//A4, callback(base64), [duration]
+//A4, callback(url), [duration]
 nodeFactory.prototype.get = function(noteFullName, callback, duration){
     duration = duration || this.config.duration;
     var data = this.cache[noteFullName], 
@@ -76,12 +73,8 @@ nodeFactory.prototype.cache = function(noteFullName, duration, data){
     }
 }
 nodeFactory.prototype.build = function(noteFullName, duration){
-    var noteExp = /([A-Z|#]{1, 2})([\d])/, match;
-    match = noteExp.exec(noteFullName);
-    if(!match){
-        return;
-    }
-    var f = $.getFrequency(match[1], match[2]);
+    var match = $.parseNote(noteFullName);
+    var f = $.getFrequency(match[0], match[1]);
     this.worker.postMessage({
         f : f,
         note : noteFullName,
@@ -95,7 +88,7 @@ nodeFactory.prototype._sub = function(noteFullName, duration, callback){
     }
     this._listener[id].push(callback);
 }
-nodeFactory.prototype._pub = function(noteFullName, duration, base64){
+nodeFactory.prototype._pub = function(noteFullName, duration, url){
     var id = getID(noteFullName, duration);
     var list = this._listener[id] || [];
     this._listener[id] = [];
@@ -104,7 +97,10 @@ nodeFactory.prototype._pub = function(noteFullName, duration, base64){
         duration : duration
     };
     list.forEach(function(func){
-        func(base64, arg);
+        func(url, arg);
     });
 }
+nodeFactory.translate = $.translate;
+nodeFactory.effect = require('./effect');
+nodeFactory.noteList = $.list;
 module.exports = nodeFactory;
