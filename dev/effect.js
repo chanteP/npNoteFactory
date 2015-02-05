@@ -1,7 +1,18 @@
 module.exports = {
+    'test' : function(w, t, spec){
+        return spec.vol * sin(w * t);
+    },
     '8bit' : function(w, t, spec){
-        spec.vol = 100;
-        return Math.sin(w * t);
+        return 100 * sin(w * t);
+    },
+    'angle' : function(w, t, spec){
+        return spec.vol * sin(w * t);
+    },
+    'tuningFork' : function(w, t, spec){
+        return spec.vol / 1.2 * (
+                sin(w * t)
+                + .2 * sin(2 * w * t)
+            );
     },
     'piano' : function(w, t, spec){
         return spec.vol / 1.5 * (
@@ -9,5 +20,14 @@ module.exports = {
                 + .3 * sin(2 * w * t)
                 + .2 * sin(3 * w * t)
             );
+    },
+    'guitar' : function(w, t, spec){
+        return spec.vol / 2.2 * (
+                  pow(sin(w*t)                  , 3)
+                + .5 * pow(sin(w*2*t), 3)
+                + .4 * pow(sin(w*3*t), 3)
+                + .3 * pow(sin(w*4*t), 3)
+            );
     }
 }
+//http://www.phy.ntnu.edu.tw/demolab/html.php?html=teacher/sound/sound6

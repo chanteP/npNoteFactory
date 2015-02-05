@@ -47,6 +47,9 @@ var nodeFactory = function(cfg){
 }
 //A4, callback(url), [duration]
 nodeFactory.prototype.get = function(noteFullName, callback, duration){
+    if(typeof noteFullName === 'number'){
+        noteFullName = $.translate(noteFullName);
+    }
     duration = duration || this.config.duration;
     var data = this.cache[noteFullName], 
         self = this, 
@@ -100,6 +103,7 @@ nodeFactory.prototype._pub = function(noteFullName, duration, url){
         func(url, arg);
     });
 }
+nodeFactory.getFrequency = $.getFrequency;
 nodeFactory.translate = $.translate;
 nodeFactory.effect = require('./effect');
 nodeFactory.noteList = $.list;

@@ -2,9 +2,20 @@
 module.exports = window.Note = require('./dev/noteFactory');
 },{"./dev/noteFactory":5}],2:[function(require,module,exports){
 module.exports = {
+    'test' : function(w, t, spec){
+        return spec.vol * sin(w * t);
+    },
     '8bit' : function(w, t, spec){
-        spec.vol = 100;
-        return Math.sin(w * t);
+        return 100 * sin(w * t);
+    },
+    'angle' : function(w, t, spec){
+        return spec.vol * sin(w * t);
+    },
+    'tuningFork' : function(w, t, spec){
+        return spec.vol / 1.2 * (
+                sin(w * t)
+                + .2 * sin(2 * w * t)
+            );
     },
     'piano' : function(w, t, spec){
         return spec.vol / 1.5 * (
@@ -12,8 +23,17 @@ module.exports = {
                 + .3 * sin(2 * w * t)
                 + .2 * sin(3 * w * t)
             );
+    },
+    'guitar' : function(w, t, spec){
+        return spec.vol / 2.2 * (
+                  pow(sin(w*t)                  , 3)
+                + .5 * pow(sin(w*2*t), 3)
+                + .4 * pow(sin(w*3*t), 3)
+                + .3 * pow(sin(w*4*t), 3)
+            );
     }
 }
+//http://www.phy.ntnu.edu.tw/demolab/html.php?html=teacher/sound/sound6
 },{}],3:[function(require,module,exports){
 module.exports = function(){
     var PI = Math.PI, sin = Math.sin, cos = Math.cos, tan = Math.tan, cot = Math.cot, pow = Math.pow, sqrt = Math.sqrt, abs = Math.abs;
@@ -122,8 +142,9 @@ var api = {
     },
     list : list,
     getFrequency : function(noteName, level){
-        return baseAHz * Math.pow(q, api.translate(noteName, level) - baseAIndex);
+        return baseAHz * Math.pow(q, api.translate(noteName + level) - baseAIndex);
     },
+    //A4 => 57, 57 => A4
     translate : function(input){
         var note, level;
         if(typeof input === 'string'){
@@ -131,7 +152,7 @@ var api = {
             note = match[0];
             level = match[1];
             var index = list.indexOf(note);
-            if(index <= 0){
+            if(index < 0){
                 throw 'translate note: ' + note + ' error';
             }
             return level * 12 + index;
@@ -145,16 +166,17 @@ var api = {
             throw 'translate note: ' + input + ' error';
         }
     },
+    //A4 => A, 4
     parseNote : function(input){
         var noteExp = /(#?[A-Z])([\d])/, match;
         match = noteExp.exec(input);
         if(!match){
-            throw 'input error : ' + $.list;
+            throw 'input error : ' + input;
         }
         return [match[1], match[2]];
     }
 };
-var q = Math.pow(2, 1 / 12) || 1.06, baseAHz = 440, baseAIndex = api.translate('A', 4);
+var q = Math.pow(2, 1 / 12) || 1.06, baseAHz = 440, baseAIndex = api.translate('A4');
 module.exports = api;
 },{}],5:[function(require,module,exports){
 var $ = require('./kit');
@@ -206,6 +228,9 @@ var nodeFactory = function(cfg){
 }
 //A4, callback(url), [duration]
 nodeFactory.prototype.get = function(noteFullName, callback, duration){
+    if(typeof noteFullName === 'number'){
+        noteFullName = $.translate(noteFullName);
+    }
     duration = duration || this.config.duration;
     var data = this.cache[noteFullName], 
         self = this, 
@@ -259,6 +284,7 @@ nodeFactory.prototype._pub = function(noteFullName, duration, url){
         func(url, arg);
     });
 }
+nodeFactory.getFrequency = $.getFrequency;
 nodeFactory.translate = $.translate;
 nodeFactory.effect = require('./effect');
 nodeFactory.noteList = $.list;

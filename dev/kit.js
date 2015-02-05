@@ -41,8 +41,9 @@ var api = {
     },
     list : list,
     getFrequency : function(noteName, level){
-        return baseAHz * Math.pow(q, api.translate(noteName, level) - baseAIndex);
+        return baseAHz * Math.pow(q, api.translate(noteName + level) - baseAIndex);
     },
+    //A4 => 57, 57 => A4
     translate : function(input){
         var note, level;
         if(typeof input === 'string'){
@@ -50,7 +51,7 @@ var api = {
             note = match[0];
             level = match[1];
             var index = list.indexOf(note);
-            if(index <= 0){
+            if(index < 0){
                 throw 'translate note: ' + note + ' error';
             }
             return level * 12 + index;
@@ -64,14 +65,15 @@ var api = {
             throw 'translate note: ' + input + ' error';
         }
     },
+    //A4 => A, 4
     parseNote : function(input){
         var noteExp = /(#?[A-Z])([\d])/, match;
         match = noteExp.exec(input);
         if(!match){
-            throw 'input error : ' + $.list;
+            throw 'input error : ' + input;
         }
         return [match[1], match[2]];
     }
 };
-var q = Math.pow(2, 1 / 12) || 1.06, baseAHz = 440, baseAIndex = api.translate('A', 4);
+var q = Math.pow(2, 1 / 12) || 1.06, baseAHz = 440, baseAIndex = api.translate('A4');
 module.exports = api;

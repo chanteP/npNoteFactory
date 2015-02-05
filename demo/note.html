@@ -8,12 +8,23 @@
 <audio id="au"></audio>
 <script>
     var f = new Note({
-        soundEffect : Note.effect.piano
+        // soundEffect : Note.effect['8bit']
+        // soundEffect : Note.effect['piano']
+        soundEffect : Note.effect['guitar']
     });
-    f.get('A4', function(b){
-        au.src = b;
-        au.play();
-    });
+    // f.get('A4', callback);
+    var cur = Note.translate('A0');
+    
+    var run = function(){
+        console.log(Note.translate(cur));
+        if(cur > 100){return;}
+        f.get(cur+=12, function(b){
+            au.src = b;
+            au.play();
+        });
+        setTimeout(arguments.callee, 1000);
+    }
+    run();
 </script>
 </body>
 </html>
