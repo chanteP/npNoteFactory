@@ -54,9 +54,10 @@ var api = {
             if(index < 0){
                 throw 'translate note: ' + note + ' error';
             }
-            return level * 12 + index;
+            return level * 12 + index + 12;
         }
         else if(typeof input === 'number'){
+            input = input - 12;
             note = input % 12;
             level = (input / 12) | 0;
             return list[note] + level;
@@ -67,7 +68,7 @@ var api = {
     },
     //A4 => A, 4
     parseNote : function(input){
-        var noteExp = /(#?[A-Z])([\d])/, match;
+        var noteExp = /(#?[A-Z])(-?[\d])/, match;
         match = noteExp.exec(input);
         if(!match){
             throw 'input error : ' + input;

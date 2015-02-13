@@ -17,6 +17,7 @@ module.exports = {
                 + .2 * sin(2 * w * t)
             );
     },
+    // weak : .99985,
     'piano' : function(w, t, spec){
         return spec.vol / 1.5 * (
                 sin(w * t)
@@ -24,9 +25,10 @@ module.exports = {
                 + .2 * sin(3 * w * t)
             );
     },
+    // weak : .99985,
     'guitar' : function(w, t, spec){
         return spec.vol / 2.2 * (
-                  pow(sin(w*t)                  , 3)
+                  pow(sin(w*t)       , 3)
                 + .5 * pow(sin(w*2*t), 3)
                 + .4 * pow(sin(w*3*t), 3)
                 + .3 * pow(sin(w*4*t), 3)
@@ -155,9 +157,10 @@ var api = {
             if(index < 0){
                 throw 'translate note: ' + note + ' error';
             }
-            return level * 12 + index;
+            return level * 12 + index + 12;
         }
         else if(typeof input === 'number'){
+            input = input - 12;
             note = input % 12;
             level = (input / 12) | 0;
             return list[note] + level;
@@ -168,7 +171,7 @@ var api = {
     },
     //A4 => A, 4
     parseNote : function(input){
-        var noteExp = /(#?[A-Z])([\d])/, match;
+        var noteExp = /(#?[A-Z])(-?[\d])/, match;
         match = noteExp.exec(input);
         if(!match){
             throw 'input error : ' + input;
