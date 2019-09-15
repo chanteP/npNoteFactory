@@ -1,4 +1,4 @@
-module.exports = {
+export default {
     'test' : function(w, t, spec){
         return spec.vol * sin(w * t);
     },

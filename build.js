@@ -9,7 +9,7 @@ var dest = './dist/'+filename+'.js';
 var destmin = './dist/'+filename+'.min.js';
 
 var b = browserify();
-b.add('./index.js');
+b.add('./src/index.js');
 b.bundle()
     .pipe(fs.createWriteStream(dest))
     .on('finish', function(){
