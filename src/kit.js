@@ -1,17 +1,18 @@
 //A4 = 440hz
-const q = Math.pow(2, 1 / 12) || 1.06, 
-    baseAHz = 440, 
-    baseAIndex = translate('A4');
+const list = ["C","#C","D","#D","E","F","#F","G","#G","A","#A","B"];
+const q = Math.pow(2, 1 / 12) || 1.06;
+const baseAHz = 440;
+const baseAIndex = translate('A4');
 
-export const list = ["C","#C","D","#D","E","F","#F","G","#G","A","#A","B"];
-export const Worker = (function (){
-    var functionBodyRegx, URL, contentType, code, url;
+
+const Worker = (function (){
+    let functionBodyRegx, contentType, code, url;
     functionBodyRegx = /function[^(]*\([^)]*\)\s*\{([\s\S]*)\}/;
-    URL = window.URL || window.webkitURL;
     contentType = { type: "text/javascript; charset=utf-8" };
     return function( fn , spec){
-        var fnStr = fn.toString();
-        for(var param in spec){
+        let URL = window.URL || window.webkitURL;
+        let fnStr = fn.toString();
+        for(let param in spec){
             fnStr = fnStr.replace('"{{'+param+'}}"', spec[param]);
         }
         code = fnStr.match( functionBodyRegx )[1];
@@ -20,22 +21,31 @@ export const Worker = (function (){
     }
 })();
 
-export function getFrequency(noteName, level){
+module.exports = {
+    list,
+    Worker,
+    getFrequency,
+    getFrequencyByName,
+    translate,
+    parseNote,
+}
+
+function getFrequency(noteName, level){
     return baseAHz * Math.pow(q, translate(noteName + level) - baseAIndex);
 }
-export function getFrequencyByName(note){
+function getFrequencyByName(note){
     const [noteName, level] = parseNote(note);
     return baseAHz * Math.pow(q, translate(noteName + level) - baseAIndex);
 }
 
 //A4 => 57, 57 => A4
-export function translate(input){
-    var note, level;
+function translate(input){
+    let note, level;
     if(typeof input === 'string'){
-        var match = parseNote(input);
+        let match = parseNote(input);
         note = match[0];
         level = match[1];
-        var index = list.indexOf(note);
+        let index = list.indexOf(note);
         if(index < 0){
             throw 'translate note: ' + note + ' error';
         }
@@ -53,8 +63,8 @@ export function translate(input){
 }
 
 //A4 => A, 4
-export function parseNote(input){
-    var noteExp = /(#?[A-Z])(-?[\d])/, match;
+function parseNote(input){
+    let noteExp = /(#?[A-Z])(-?[\d])/, match;
     match = noteExp.exec(input);
     if(!match){
         throw 'input error : ' + input;

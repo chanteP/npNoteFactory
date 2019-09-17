@@ -6,35 +6,6 @@
 </head>
 <body>
 <script>
-    var engine = new Note({
-        // soundEffect : Note.effect['8bit']
-        // soundEffect : Note.effect['piano'],
-        duration : 5,
-        weak : .99988,
-        soundEffect : Note.effect['guitar']
-    });
-    // f.get('A4', callback);
-    var cur = Note.translate('C3'), end = Note.translate('C5');
-    
-    var run = function(){
-        if(cur >= end){return;}
-        if(Note.translate(cur)[0] !== '#'){
-            console.log(Note.translate(cur));
-
-            engine.get(cur, function(b){
-                var au = new Audio;
-                au.src = b;
-                au.play();
-            });
-
-            setTimeout(arguments.callee, 200);
-        }
-        else{
-            setTimeout(arguments.callee, 0);
-        }
-        cur++;
-    }
-    run();
 </script>
 </body>
 </html>

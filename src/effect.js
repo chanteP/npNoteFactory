@@ -1,9 +1,11 @@
-export default {
+const {sin, pow} = Math;
+
+module.exports = {
     'test' : function(w, t, spec){
         return spec.vol * sin(w * t);
     },
     '8bit' : function(w, t, spec){
-        return 100 * sin(w * t);
+        return sin(w * t) + 1;
     },
     'angle' : function(w, t, spec){
         return spec.vol * sin(w * t);
@@ -16,10 +18,10 @@ export default {
     },
     // weak : .99985,
     'piano' : function(w, t, spec){
-        return spec.vol / 1.5 * (
+        return (
                 sin(w * t)
-                + .3 * sin(2 * w * t)
-                + .2 * sin(3 * w * t)
+                + .5 * sin(2 * w * t)
+                + .4 * sin(3 * w * t)
             );
     },
     // weak : .99985,
