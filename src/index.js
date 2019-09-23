@@ -54,7 +54,7 @@ class Engine {
 window.onclick = () => {
     // wav播放尾音问题
     // effect函数问题
-    new Engine({ effect: '8bit', len: 1 }).play('C4').play('G3');
+    new Engine({ effect: '8bit', len: 3 }).play('C4').play('G3');
 }
 
 
