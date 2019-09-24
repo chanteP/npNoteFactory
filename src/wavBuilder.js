@@ -76,3 +76,8 @@ function wavBuilder(source, customFormat = {}) {
 function charCodeFormat(string){
     return string.split('').map((char, i) => string.charCodeAt(i));
 }
+
+module.exports = {
+    wavBuilder,
+    format,
+}

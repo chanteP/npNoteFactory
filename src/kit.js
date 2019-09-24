@@ -4,15 +4,21 @@ const q = Math.pow(2, 1 / 12) || 1.06;
 const baseAHz = 440;
 const baseAIndex = translate('A4');
 
-
 const Worker = function (fn, env) {
-    let functionBodyRegx = /function[^(]*\([^)]*\)\s*\{([\s\S]*)\}/;
+    let functionBodyRegx = /\{([\s\S]*)\}/m;
     let contentType = { type: "text/javascript; charset=utf-8" };
     let fnStr = fn.toString();
     let code = fnStr.match(functionBodyRegx)[1];
     let envList = [];
     Object.keys(env).map(key => {
-        envList.push(`const ${key} = ${env[key] ? env[key].toString() : env[key]};`);
+        let content = '';
+        if(typeof env[key] === 'function'){
+            content = env[key].toString();
+        }
+        else{
+            content = JSON.stringify(env[key]);
+        }
+        envList.push(`const ${key} = ${content};`);
     });
     let URL = window.URL || window.webkitURL;
     let url = URL.createObjectURL(new Blob([envList.join('\n'), code], contentType));
@@ -26,6 +32,14 @@ module.exports = {
     getFrequencyByName,
     translate,
     parseNote,
+    sleep,
+}
+async function sleep(delay) {
+    return new Promise(res => {
+        setTimeout(_ => {
+            res();
+        }, delay)
+    })
 }
 
 function getFrequency(noteName, level) {

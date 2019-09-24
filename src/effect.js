@@ -1,38 +1,44 @@
-const {sin, pow} = Math;
+//http://www.phy.ntnu.edu.tw/demolab/html.php?html=teacher/sound/sound6
+
+const { sin, pow } = Math;
 
 module.exports = {
-    'test' : function(w, t, spec){
-        return spec.vol * sin(w * t);
+    'test': function (w, t, spec) {
+        return sin(w * t);
     },
-    '8bit' : function(w, t, spec){
-        return sin(w * t) + 1;
+    '8bit': function (w, t, spec) {
+        return sin(w * t);
     },
-    'angle' : function(w, t, spec){
-        return spec.vol * sin(w * t);
-    },
-    'tuningFork' : function(w, t, spec){
-        return spec.vol / 1.2 * (
-                sin(w * t)
-                + .2 * sin(2 * w * t)
-            );
-    },
-    // weak : .99985,
-    'piano' : function(w, t, spec){
-        spec.vol *= .99988;
+    'tuningFork': function (w, t, spec) {
+        spec.vol *= .99999;
         return (
-                sin(w * t)
-                + .5 * sin(2 * w * t)
-                + .4 * sin(3 * w * t)
-            );
+            sin(w * t)
+        );
     },
     // weak : .99985,
-    'guitar' : function(w, t, spec){
-        return spec.vol / 2.2 * (
-                  pow(sin(w*t)       , 3)
-                + .5 * pow(sin(w*2*t), 3)
-                + .4 * pow(sin(w*3*t), 3)
-                + .3 * pow(sin(w*4*t), 3)
-            );
+    'piano': function (w, t, spec) {
+        spec.vol *= .99998;
+        return (
+            .6 * sin(w * t)
+            + .15 * sin(w * 2 * t)
+            + .15 * sin(w * 3 * t)
+            + .1 * sin(w * 4 * t)
+            + .03 * sin(w * 5 * t)
+            + .03 * sin(w * 6 * t)
+            + .03 * sin(w * 7 * t)
+        );
+    },
+    // TODO
+    'guitar': function (w, t, spec) {
+        spec.vol *= .99998;
+        return (
+            .6 * sin(w * t)
+            + .1 * sin(w * 2 * t)
+            + .1 * sin(w * 3 * t)
+            + .03 * sin(w * 4 * t)
+            + .03 * sin(w * 5 * t)
+            + .03 * sin(w * 6 * t)
+            + .03 * sin(w * 7 * t)
+        );
     }
 }
-//http://www.phy.ntnu.edu.tw/demolab/html.php?html=teacher/sound/sound6

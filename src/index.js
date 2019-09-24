@@ -1,7 +1,15 @@
 
-// const wavBuilder = require('./wavBuilder');
+/**
+    new Engine({ effect: 'piano', len: 5})
+        .play('C3', {len: 2})
+        .play('C3 G2 E3')
+        .play('G3')
+        .play('A3')
+ */
 const effect = require('./effect');
-const { list, getFrequencyByName } = require('./kit');
+const { list, getFrequencyByName, sleep, Worker } = require('./kit');
+const workerContent = require('./worker');
+const { format, wavBuilder } = require('./wavBuilder');
 
 class Engine {
     constructor(options = {}) {
@@ -10,58 +18,59 @@ class Engine {
             effect: 'piano',
             sampleRate: 44100,
         }, options);
-        this.playList = [];
         this.setEffect(this.options.effect);
     }
     setEffect(effectName) {
-        if (typeof effectName === 'function') {
-            return this.options.effect = effectName;
-        }
-        if (!effect[effectName]) {
+        if (!effect[effectName] && typeof effectName !== 'function') {
             throw `effect:${effectName} not found`;
         }
-        this.options.effect = effect[effectName];
+        this.options.effect = effect[effectName] || (typeof effectName === 'function' && effectName) || effect['piano'];
+        this.options.effect = this.options.effect.toString();
     }
     async buildBlob(options) {
         return new Promise((res, rej) => {
-            let wk = new Worker('/src/worker.js');
+            // TODO 同一个worker的话性能跟不上
+            let wk = new Worker(workerContent, { format, wavBuilder });
             wk.postMessage(options);
             wk.onmessage = (e) => {
                 res(e.data.blob);
+                wk.terminate();
             }
-            wk.onerror = (e) => rej(e);
+            wk.onerror = (e) => {
+                rej(e);
+                wk.terminate();
+            };
         });
     }
     async get(name, options) {
         let f = getFrequencyByName(name);
-        return await this.buildBlob(Object.assign({ f, len: this.options.len, effect: this.options.effect.toString() }, options));
+        return await this.buildBlob(Object.assign({ f, len: this.options.len }, this.options, options));
     }
-    play(name, options) {
-        let i = this.playList.length;
-        this.playList.push(new Promise(res => {
-            this.get(name, options).then(async wav => {
-                await Promise.resolve(this.playList[i - 1]);
+    play(name, { delay = 0, options } = {}, callback) {
+        (async _ => {
+            await sleep(delay);
+            this.audio(name, options);
+            callback && callback(name, {delay, options});
+        })();
+        return this;
+    }
+    async audio(name, options) {
+        if (~name.indexOf(' ')) {
+            return Promise.all(name.split(' ').map(n => this.audio(n, options)));
+        }
+        return this.get(name, options).then(wav => {
+            return new Promise(res => {
                 let wavUrl = URL.createObjectURL(wav);
                 let audio = new Audio;
                 audio.src = wavUrl;
                 audio.play();
-                audio.onended = () => { console.log(1); res() };
+                audio.onended = () => { res() };
             });
-        }));
-        return this;
+        });
     }
 }
-window.onclick = () => {
-    // wav播放尾音问题
-    // effect函数问题
-    new Engine({ effect: 'piano', len: 2 })
-        .play('C4',{bitsPerSample:16,numChannels:2})
-        // .play('G3');
-}
+Engine.list = list;
+Engine.effect = effect;
 
-
-// export default 
-
-
-
-module.exports = Engine
+module.exports = Engine;
+typeof self !== 'undefined' && (self.Engine = Engine);

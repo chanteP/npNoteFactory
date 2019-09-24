@@ -6,6 +6,30 @@
 </head>
 <body>
 <script>
+
+let engine = new Engine({ effect: 'piano', len: 5});
+window.onclick = () => {
+    engine
+        .play('G2')
+        .play('C3 E3 G2', {delay: 1000})
+        .play('D3 F3 A2', {delay: 2000})
+        .play('E3 G3 B2', {delay: 3000});
+}
+function check(){
+    let list = Engine.list;
+    let r = 2;
+    let delay = 0;
+    while(r < 5){
+        let k = 0;
+        while(k < list.length){
+            engine.play(`${list[k]}${r}`, {delay}, (name) => console.log(name));
+            delay += 500;
+            k++;
+        }
+        r++;
+    }
+}
+
 </script>
 </body>
 </html>
