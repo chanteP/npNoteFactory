@@ -25,7 +25,7 @@ function calc({ f, len = 3, sampleRate = 44100, bitsPerSample = 16, numChannels 
         f: f,
         T: f * sampleRate
     };
-    let data = new Uint8Array(size);
+    let data = new Uint8Array(size * blockSize);
     let effectFunc = new Function('w', 't', 'spec', '{sin,cos,pow,abs,sqrt} = Math', parseFunctionBody(effect));
     while (t <= size) {
         let sampleData = effectFunc(w, t, spec) * spec.vol;
