@@ -45,7 +45,7 @@ class Engine {
                 let audio = new Audio;
                 audio.src = wavUrl;
                 audio.play();
-                audio.onended = () => {console.log(1);res()};
+                audio.onended = () => { console.log(1); res() };
             });
         }));
         return this;
@@ -54,7 +54,9 @@ class Engine {
 window.onclick = () => {
     // wav播放尾音问题
     // effect函数问题
-    new Engine({ effect: '8bit', len: 3 }).play('C4').play('G3');
+    new Engine({ effect: 'piano', len: 2 })
+        .play('C4',{bitsPerSample:16,numChannels:2})
+        // .play('G3');
 }
 
 

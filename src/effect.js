@@ -18,6 +18,7 @@ module.exports = {
     },
     // weak : .99985,
     'piano' : function(w, t, spec){
+        spec.vol *= .99988;
         return (
                 sin(w * t)
                 + .5 * sin(2 * w * t)
