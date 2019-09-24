@@ -1,1 +1,0 @@
-module.exports = window.Note = require('./dev/noteFactory');
